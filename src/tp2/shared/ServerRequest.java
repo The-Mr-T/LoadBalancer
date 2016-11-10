@@ -1,5 +1,6 @@
 package tp2.shared;
 
+import java.util.List;
 import java.util.concurrent.Callable;
 
 /**
@@ -7,10 +8,10 @@ import java.util.concurrent.Callable;
  */
 public class ServerRequest implements Callable<Integer>
 {
-    public ServerInterface server;
-    public Operation[] operations;
+    private ServerInterface server;
+    private List<Operation> operations;
 
-    public ServerRequest(ServerInterface serverInterface, Operation[] operationList)
+    public ServerRequest(ServerInterface serverInterface, List<Operation> operationList)
     {
         server = serverInterface;
         operations = operationList;

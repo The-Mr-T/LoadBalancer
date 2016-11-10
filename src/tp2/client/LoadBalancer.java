@@ -1,14 +1,12 @@
 package tp2.client;
 
-import tp2.shared.ServerRequest;
-import tp2.shared.Utils;
-import tp2.shared.Operation;
-import tp2.shared.ServerInterface;
+import tp2.shared.*;
 
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -23,27 +21,33 @@ public class LoadBalancer
 {
     public static void main(String[] args)
     {
+        for (String arg : args)
+            System.out.println(arg);
+
         if (args.length != 2)
             throw new IllegalArgumentException();
 
         // Construire les requetes a etre executees
-        String fileName = args[1];
+        String fileName = args[0];
         String fileContents = Utils.readFile(fileName);
 
         String[] lines = fileContents.split("\n");
-        Operation[] requests = new Operation[lines.length];
-        for (int i = 0; i < lines.length; i++)
-        {
-            String line = lines[i];
-            requests[i] = new Operation(line);
-        }
+        List<Operation> requests = new ArrayList<>(lines.length);
+        for (String line : lines)
+            requests.add(new Operation(line));
 
         // Charger le fichier de config pour les serveurs
         String configContents = Utils.readFile("config.cfg");
         String[] serverList = configContents.split("\n");
 
+        int result;
+
         LoadBalancer balancer = new LoadBalancer(requests, serverList);
-        balancer.run();
+        if (args[1].equals("safe"))
+            result = balancer.runSafe();
+        else result = balancer.runUnsafe();
+
+        System.out.println(Integer.toString(result));
     }
 
     private static ServerInterface[] connectToServers(String[] servers)
@@ -61,6 +65,9 @@ public class LoadBalancer
 
     private static ServerInterface loadServer(String hostname)
     {
+        if (hostname.isEmpty())
+            throw new IllegalArgumentException();
+
         ServerInterface result = null;
 
         try
@@ -69,38 +76,93 @@ public class LoadBalancer
             result = (ServerInterface) registry.lookup("server");
         } catch (NotBoundException e) {
             System.err.println("Erreur: le nom '" + e.getMessage() + "' n'est pas defini dans le registre");
+            System.exit(-1);
         } catch (RemoteException e) {
             System.err.println("Erreur: " + e.getMessage());
+            System.exit(-1);
         }
 
         return result;
     }
 
-    private Operation[] requestList;
+    private List<Operation> requestList;
     private ServerInterface[] serverList;
-    private LoadBalancer(Operation[] requests, String[] servers)
+    private LoadBalancer(List<Operation> requests, String[] servers)
     {
         super();
 
         requestList = requests;
+        System.out.println("SIZE: " + requests.size());
         serverList = connectToServers(servers);
     }
 
-    private int qInit = 15;
-    private void run()
+    private int runSafe()
     {
+        final int qInit = 15;
+
         int[] impliedQ = new int[serverList.length];
         for (int i = 0; i < impliedQ.length; i++)
             impliedQ[i] = qInit;
 
+        int sum = 0;
+
         ExecutorService threadPool = Executors.newFixedThreadPool(serverList.length);
 
-        List<Future<Integer>> futureList = new ArrayList<>();
-        for (ServerInterface server : serverList)
-        {
+        while (true) {
+            int firstIndex = Utils.firstIndexWhereStatusNotEquals(requestList, Status.DONE);
+            if (firstIndex == requestList.size())
+                break;
 
-            //ServerRequest request = new ServerRequest(server, subList);
-            //futureList.add(threadPool.submit(request));
+            List<Future<Integer>> futureList = new ArrayList<>();
+            for (int i = 0; i < serverList.length; i++) {
+                ServerInterface server = serverList[i];
+                int currentQ = impliedQ[i];
+
+                int firstIndexTODO = Utils.firstIndexWhereStatusEquals(requestList, Status.TODO);
+                int firstIndexDone = Utils.firstIndexWhereStatusEquals(requestList, Status.DONE, firstIndexTODO);
+
+                firstIndexDone = firstIndexTODO + currentQ < firstIndexDone ? firstIndexTODO + currentQ : firstIndexDone;
+
+                List<Operation> subList = new ArrayList<>();
+                for (int j = firstIndexTODO; i < firstIndexDone; i++) {
+                    Operation current = requestList.get(j);
+                    current.status = Status.IN_PROGRESS;
+                    subList.add(current);
+                }
+
+                ServerRequest request = new ServerRequest(server, subList);
+                futureList.add(threadPool.submit(request));
+            }
+
+            while (!futureList.isEmpty()) {
+                List<Future<Integer>> toRemove = new ArrayList<>();
+                for (Future<Integer> future : futureList) {
+                    if (future.isDone()) {
+                        int result;
+                        try {
+                            result = future.get();
+                        } catch (ExecutionException | InterruptedException ex) {
+                            System.err.println("Error: " + ex.getMessage());
+                            continue;
+                        }
+
+                        sum += result;
+                        sum %= 4000;
+
+                        toRemove.add(future);
+                    }
+                }
+
+                for (Future<Integer> fut : toRemove)
+                    futureList.remove(fut);
+            }
         }
+
+        return sum;
+    }
+
+    private int runUnsafe()
+    {
+        return -1;
     }
 }

@@ -19,7 +19,7 @@ public class Operation
             throw new IllegalArgumentException();
 
         operation = separated[0];
-        if (operation.equals("pell") || operation.equals("prime"))
+        if (!operation.equals("pell") && !operation.equals("prime"))
             throw new IllegalArgumentException();
         value = Integer.parseInt(separated[1]);
     }

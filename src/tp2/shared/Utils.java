@@ -3,6 +3,7 @@ package tp2.shared;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Created by Rusty on 11/10/2016.
@@ -21,8 +22,8 @@ public class Utils
         {
             byte[] fileBytes = new byte[(int)file.length()];
 
-            if (stream.read(fileBytes, 0, (int)file.length()) != -1)
-                throw new IllegalArgumentException();
+            stream.read(fileBytes, 0, (int)file.length());
+                //throw new IllegalArgumentException();
 
             fileContents = new String(fileBytes);
         }
@@ -33,5 +34,28 @@ public class Utils
         }
 
         return fileContents;
+    }
+
+    public static int firstIndexWhereStatusNotEquals(List<Operation> opList, Status status)
+    {
+        for (int i = 0; i < opList.size(); i++)
+            if (opList.get(i).status != status)
+                return i;
+
+        return opList.size();
+    }
+
+    public static int firstIndexWhereStatusEquals(List<Operation> opList, Status status)
+    {
+        return firstIndexWhereStatusEquals(opList, status, 0);
+    }
+
+    public static int firstIndexWhereStatusEquals(List<Operation> opList, Status status, int initIndex)
+    {
+        for (int i = initIndex; i < opList.size(); i++)
+            if (opList.get(i).status == status)
+                return i;
+
+        return opList.size();
     }
 }
