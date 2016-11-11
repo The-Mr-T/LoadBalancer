@@ -60,9 +60,10 @@ public class Server implements ServerInterface
 
         try
         {
-            ServerInterface stub = (ServerInterface) UnicastRemoteObject.exportObject(this, _port);
+            System.out.println("Port is: " + _port);
+            ServerInterface stub = (ServerInterface) UnicastRemoteObject.exportObject(this, 0);
 
-            Registry registry = LocateRegistry.getRegistry();
+            Registry registry = LocateRegistry.getRegistry(_port);
             registry.rebind("server", stub);
             System.out.println("Server ready.");
         } catch (ConnectException e) {
