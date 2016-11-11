@@ -13,6 +13,7 @@ import java.util.concurrent.Future;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Stack;
 
 /**
  * Created by Rusty on 11/10/2016.
@@ -41,13 +42,17 @@ public class LoadBalancer
         String[] serverList = configContents.split("\n");
 
         int result;
-
-        LoadBalancer balancer = new LoadBalancer(requests, serverList);
-        if (args[1].equals("safe"))
-            result = balancer.runSafe();
-        else result = balancer.runUnsafe();
+        
+        boolean safety = args[1].equals("safe");
+        long startTime = System.currentTimeMillis();
+        LoadBalancer balancer = new LoadBalancer(requests, serverList, safety);
+        result = balancer.run();
+        long endTime = System.currentTimeMillis();
+        
+        long timeExec = endTime - startTime;
 
         System.out.println(Integer.toString(result));
+        System.out.println("EXECUTION TIME: " + timeExec + " ms");
     }
 
     private static ServerInterface[] connectToServers(String[] servers)
@@ -95,16 +100,20 @@ public class LoadBalancer
 
     private List<Operation> requestList;
     private ServerInterface[] serverList;
-    private LoadBalancer(List<Operation> requests, String[] servers)
+    private boolean isSafe;
+    private Stack<ServerRequest> checkStack;
+    private LoadBalancer(List<Operation> requests, String[] servers, boolean safety)
     {
         super();
 
         requestList = requests;
         System.out.println("SIZE: " + requests.size());
         serverList = connectToServers(servers);
+        isSafe = safety;
+        checkStack = new Stack<>();
     }
 
-    private int runSafe()
+    private int run()
     {
         final int qInit = 15;
 
@@ -117,62 +126,109 @@ public class LoadBalancer
         ExecutorService threadPool = Executors.newFixedThreadPool(serverList.length);
 
         while (true) {
-            int firstIndex = Utils.firstIndexWhereStatusNotEquals(requestList, Status.DONE);
-            if (firstIndex == requestList.size())
+            int doneIndex = Utils.firstIndexWhereStatusNotEquals(requestList, Status.DONE);
+            if (doneIndex == requestList.size())
                 break;
-
-            List<Future<Integer>> futureList = new ArrayList<>();
-            for (int i = 0; i < serverList.length; i++) {
-                ServerInterface server = serverList[i];
-                int currentQ = impliedQ[i];
-
-                int firstIndexTODO = Utils.firstIndexWhereStatusEquals(requestList, Status.TODO);
-                int firstIndexDone = Utils.firstIndexWhereStatusEquals(requestList, Status.DONE, firstIndexTODO);
-
-                firstIndexDone = firstIndexTODO + currentQ < firstIndexDone ? firstIndexTODO + currentQ : firstIndexDone;
-
-		System.out.println("FIRST INDEX TODO: " + firstIndexTODO);
-		System.out.println("FIRSTINDEXDONE: " + firstIndexDone);
-                List<Operation> subList = new ArrayList<>();
-                for (int j = firstIndexTODO; i < firstIndexDone; i++) {
-                    Operation current = requestList.get(j);
-                    current.status = Status.IN_PROGRESS;
-                    subList.add(current);
-                }
-
-                ServerRequest request = new ServerRequest(server, subList, true);
-                futureList.add(threadPool.submit(request));
-            }
-
-            while (!futureList.isEmpty()) {
-                List<Future<Integer>> toRemove = new ArrayList<>();
-                for (Future<Integer> future : futureList) {
-                    if (future.isDone()) {
-                        int result;
-                        try {
-                            result = future.get();
-                        } catch (ExecutionException | InterruptedException ex) {
-                            System.err.println("Error: " + ex.getMessage());
-                            continue;
-                        }
-
-                        sum += result;
-                        sum %= 4000;
-
-                        toRemove.add(future);
-                    }
-                }
-
-                for (Future<Integer> fut : toRemove)
-                    futureList.remove(fut);
-            }
+            
+            List<Future<ServerRequest>> futureList = generateRequests(threadPool, impliedQ);
+            sum = handleFutureList(futureList, impliedQ, sum);
         }
 
         return sum;
     }
 
-    private int runUnsafe()
-    {
-        return -1;
+    private List<Future<ServerRequest>> generateRequests(ExecutorService threadPool, int[] impliedQ) {
+        List<Future<ServerRequest>> futureList = new ArrayList<>();
+        for (int i = 0; i < serverList.length; i++) {
+            ServerInterface server = serverList[i];
+            int currentQ = impliedQ[i];
+
+            if (!checkStack.isEmpty() && checkStack.peek().operations.size() <= currentQ)
+            {
+                futureList.add(threadPool.submit(checkStack.pop()));
+                continue;
+            }
+
+            int firstIndex = Utils.firstIndexWhereStatusEquals(requestList, Status.TODO);
+            int lastIndex = Utils.firstIndexWhereStatusNotEquals(requestList, Status.TODO, firstIndex);
+
+            lastIndex = firstIndex + currentQ < lastIndex ? firstIndex + currentQ : lastIndex;
+            
+            List<Operation> subList = new ArrayList<>();
+            for (int j = firstIndex; j < lastIndex; j++) {
+                Operation current = requestList.get(j);
+                current.status = Status.IN_PROGRESS;
+                subList.add(current);
+            }
+
+            if (subList.size() == 0)
+                futureList.add(null);
+            else
+            {
+                ServerRequest request = new ServerRequest(server, subList);
+                futureList.add(threadPool.submit(request));
+            }
+        }
+
+        // Clean up the stack. If we didn't handle the verifications now then we probably never will
+        while (!checkStack.isEmpty()) {
+            ServerRequest unhandled = checkStack.pop();
+            for (Operation op : unhandled.operations)
+                op.status = Status.TODO;
+        }
+        return futureList;
+    }
+
+    private int handleFutureList(List<Future<ServerRequest>> futureList, int[] impliedQ, int theSum) {
+        int sum = theSum;
+        while (!Utils.allNull(futureList)) {
+            List<Future<ServerRequest>> toRemove = new ArrayList<>();
+            for (int i = 0; i < futureList.size(); i++) {
+                Future<ServerRequest> future = futureList.get(i);
+                    
+                if (future == null)
+                    continue;
+                    
+                if (future.isDone()) {
+                    ServerRequest result;
+                    try {
+                        result = future.get();
+                    } catch (ExecutionException | InterruptedException ex) {
+                        System.err.println("Error: " + ex.getMessage());
+                        continue;
+                    }
+                        
+                    Status newStatus;
+                    if (result.result == -1) {
+                        impliedQ[i]--;
+                        newStatus = Status.TODO;
+                    }
+                    else {
+                        if (isSafe) {
+                            newStatus = Status.DONE;
+                            sum += result.result;
+                            sum %= 4000;
+                        }
+                        else {
+                            if (result.result == result.lastResult) {
+                                newStatus = Status.DONE;
+                                sum += result.result;
+                                sum %= 4000;
+                            }
+                            else {
+                                newStatus = Status.VERIFYING;
+                                result.lastResult = result.result;
+                                checkStack.push(result);
+                            }
+                        }
+                    }
+
+                    for (Operation op : result.operations)
+                        op.status = newStatus;
+                    futureList.set(i, null);
+                }
+            }
+        }
+        return sum;
     }
 }

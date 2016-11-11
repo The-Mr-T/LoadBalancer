@@ -8,5 +8,5 @@ public enum Status
     TODO,
     DONE,
     IN_PROGRESS,
-    TO_VERIFY
+    VERIFYING
 }

@@ -79,16 +79,23 @@ public class Server implements ServerInterface
     public int executeRequests(List<Operation> opList) throws RemoteException, OperationRefusedException
     {
         int opCount = opList.size();
-	System.out.println("RECEIVED REQUEST FOR " + opCount + " OPERATIONS");
+        System.out.println("RECEIVED REQUEST FOR " + opCount + " OPERATIONS");
         if (opCount > _qi)
         {
-            double failProb = (opCount - _qi) / (4 * _qi);
+            double failProb = ((double)opCount - (double)_qi) / (4 * (double)_qi);
             if (Math.random() < failProb)
+            {
+                System.out.println("REFUSED LAST OPERATION");
                 throw new OperationRefusedException();
+            }
         }
 
         if (Math.random() * 100 < _maliciousness)
-            return (int)(Math.random() * Integer.MAX_VALUE);
+        {
+            int randomValue = (int)(Math.random() * Integer.MAX_VALUE);
+            System.out.println("MALICIOUSLY RETURNING " + randomValue);
+            return randomValue;
+        }
 
         int sum = 0;
 

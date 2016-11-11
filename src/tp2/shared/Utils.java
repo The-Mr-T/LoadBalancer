@@ -38,7 +38,12 @@ public class Utils
 
     public static int firstIndexWhereStatusNotEquals(List<Operation> opList, Status status)
     {
-        for (int i = 0; i < opList.size(); i++)
+        return firstIndexWhereStatusNotEquals(opList, status, 0);
+    }
+
+    public static int firstIndexWhereStatusNotEquals(List<Operation> opList, Status status, int initIndex)
+    {
+        for (int i = initIndex; i < opList.size(); i++)
             if (opList.get(i).status != status)
                 return i;
 
@@ -57,5 +62,12 @@ public class Utils
                 return i;
 
         return opList.size();
+    }
+    
+    public static boolean allNull(List list) {
+        for (Object t : list)
+            if (t != null) 
+                return false;
+        return true;
     }
 }

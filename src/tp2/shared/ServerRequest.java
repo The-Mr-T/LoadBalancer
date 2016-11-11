@@ -1,30 +1,44 @@
 package tp2.shared;
 
+import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.Callable;
 
 /**
  * Created by Rusty on 11/10/2016.
  */
-public class ServerRequest implements Callable<Integer>
+public class ServerRequest implements Callable<ServerRequest>
 {
     private ServerInterface server;
-    private List<Operation> operations;
-    private boolean isSafeMode;
+    public List<Operation> operations;
+    public int lastResult;
+    public int result;
 
-    public ServerRequest(ServerInterface serverInterface, List<Operation> operationList, boolean safeMode)
+    public ServerRequest(ServerInterface serverInterface, List<Operation> operationList)
     {
         server = serverInterface;
         operations = operationList;
-        isSafeMode = safeMode;
+        lastResult = -1;
+        result = -1;
     }
 
-    public Integer call() throws Exception
+    public ServerRequest call() throws Exception
     {
-        Integer result = server.executeRequests(operations);
-        for (Operation op : operations)
-            if (isSafeMode)
-                op.status = Status.DONE;
-        return result;
+        try
+        {
+            result = server.executeRequests(operations);
+        }
+        catch (RemoteException ex)
+        {
+            System.out.println("Caught error: " + ex.getMessage());
+            result = -1;
+        }
+        catch (OperationRefusedException ex)
+        {
+            System.out.println("Operation refused!");
+            result = -1;
+        }
+        
+        return this;
     }
 }
