@@ -1,0 +1,111 @@
+Tests de performance – mode sécurisé
+
+Présentez le graphique du temps d'exécution en fonction du nombre de serveurs. Expliquez les
+résultats en faisant des liens avec vos choix d'implémentation.
+
+Tests de performance – mode non-sécurisé
+
+Présentez et expliquez les temps obtenus.
+
+Question 1: Le système distribué tel que présenté dans cet énoncé devrait être résilient aux pannes
+des serveurs de calcul. Cependant, le répartiteur demeure un maillon faible. Présentez une
+architecture qui permette d'améliorer la résilience du répartiteur. Quels sont les avantages et les
+inconvénients de votre solution? Quels sont les scénarios qui causeraient quand même une panne du
+système?
+
+10 falacies
+The network is reliable.
+Latency is zero.
+Bandwidth is infinite.
+The network is secure.
+Topology doesn't change.
+There is one administrator.
+Transport cost is zero.
+The network is homogeneous.
+
+
+
+Rapport
+Puisque vous avez beaucoup de liberté pour ce travail pratique, chaque équipe devrait obtenir un
+résultat assez différent. Votre court rapport devrait donc mentionner et expliquer les différents choix
+que vous avez faits pendant la conception: la façon dont le répartiteur divise les tâches et gère les
+tâches échouées, comment le système détecte une panne intempestive, etc. Pourquoi avez-vous fait
+ces choix de préférence à d'autres ?
+
+* TODO Introduction 
+
+Une des idées principales d'un système répartis est d'être résilient, c'est à dire fortement tolérant aux pannes.
+Il serait en effet impossible, pour n'importe quel système de taille non-triviale, de garentir le fonctionnement 
+simultané de toute les machines le composant. Google a estimé, dans une étude publiée en 2007, que la probabilité qu'un disque dur 
+brise pendant une année d'utilisation normale est de 1.7% pour un disque neuf et de 8.6% pour un disque de trois ans. 
+
+"actual annualized failure rates (AFRs) for individual drives ranged from 1.7% for first year drives to over 8.6% for three-year-old drives."
+https://static.googleusercontent.com/external_content/untrusted_dlcp/research.google.com/en//archive/disk_failures.pdf
+"Annualized failure rate (AFR) gives the estimated probability that a device or component will fail during a full year of use. 
+It is a relation between the mean time between failure (MTBF) and the hours that a number of devices are run per year. AFR is 
+estimated from a sample of like components—AFR and MTBF as given by vendors are population statistics that can not predict the 
+behaviour of an individual unit.[1]"
+
+Ces valeurs, multipliées par la quantité de disques fonctionnant en même temps dans une infrastructure moderne, indique qu'un système doit
+être capable de tolérer les pannes afin d'être utilisé de façon efficace. 
+
+Le fait de répartir un système sur un ensemble de machines reliés entres-elles par un réseau implique aussi de devoir séparer un ensemble de tâches en 
+sous-unitées plus simples et de répartir ces tâches équitablement entre les noeuds du réseau afin d'obtenir une performance optimale. 
+
+* TODO Présentation de l'architecture
+
+** TODO Déterminer le temps d'exécution des opérations 
+*** TODO Pel(0 -- 50)
+**** TODO fonction pour estimer 
+**** TODO graph
+*** TODO prime(0 -- MAX_INT)
+**** TODO fonction pour estimer 
+**** TODO graph
+** TODO Gestion des serveurs morts
+Puisque nous utilisons Java RMI pour exécuter les opérations sur les serveurs de calcul, il est possible d'utiliser les mécanismes d'exceptions de Java et 
+de RMI afin de détecter si un serveur de calcul est indisponible. Le répartiteur recevra simplement une exception de type RemoteException
+quand il tentera d'exécuter un lot de travail sur un noeud n'étant plus disponible. Aucun mécanisme de keep-alive n'est implémenté par le répartiteur, toute la communication 
+entre le répartiteur et les noeuds étant encapsulé dans la couche de Java RMI. Le répartiteur peut ensuite donner le lot de travail à un autre noeud de calcul et périodiquement 
+résseayer d'attribuer du travail au noeud ne répondant pas. Si la panne persiste, le répartiteur retirera simplement le noeud de calcul de sa liste de noeuds valides. La panne peut se
+produire n'importe-quand durant l'exécution du lot de travail, puisque l'exécution d'un lot de travail est une opération atomique du point de vue du répartiteur (elle est soit exécutée au complet, 
+refusée ou une exception est levée par Java RMI signalant qu'il est impossible de l'exécuter). 
+** TODO Formation des "chunks de travail"
+Puisque les opérations sont additionnés entres elles tout est commutatif, donc on peut 
+séparer le travail comme on veux. En utilisant les métriques de temps de calcul trouvés
+plus tôt, on peut créer des lots de travail de "valeurs" approximativement égales.
+** TODO Déterminer la capacité de chaque serveur 
+*** TODO Attribuer un ID unique à chaque serveur (hardware key (MAC ? ) + timestamp)
+*** TODO Envoyer des lots de travail de plus en plus gros
+**** TODO Quand un lot est rejeté, diminuer de 1 la taille, placer l'élément rejeté dans le pool
+**** TODO Si taille max spécifiée, le faire avec un tri dichotomique ? 
+** TODO Ajustement du répartiteur en fonction des serveurs 
+*** TODO Mesurer les performances de chaque lot par rapport au facteur heuristique calculé
+Le but est d'avoir aussi une approximation du facteur de qualité du réseau
+*** TODO Ajustement de la difficulté des items de travail. 
+Les noeuds ayant une moins grande capacité réelle se font attribuer des lots de travail plus 
+faciles, permettant d'avoir des lots plus équilibrés. 
+* TODO Test de performance - mode sécurisé 
+
+* TODO Test de performance - Mode non-sécurisé
+
+* TODO Réponse Question 1
+Question 1: Le système distribué tel que présenté dans cet énoncé devrait être résilient aux pannes
+des serveurs de calcul. Cependant, le répartiteur demeure un maillon faible. Présentez une
+architecture qui permette d'améliorer la résilience du répartiteur. Quels sont les avantages et les
+inconvénients de votre solution? Quels sont les scénarios qui causeraient quand même une panne du
+système?
+
+Problème du théorème CAP
+
+"In theoretical computer science, the CAP theorem, also named Brewer's theorem after computer scientist Eric Brewer, states that it is impossible for a distributed computer system to simultaneously provide all three of the following guarantees:[1][2][3]
+
+Consistency (every read receives the most recent write or an error)
+Availability (every request receives a response, without guarantee that it contains the most recent version of the information)
+Partition tolerance (the system continues to operate despite arbitrary partitioning due to network failures)
+In other words, the CAP theorem states that in the presence of a network partition, one has to choose between consistency and availability."
+
+- En utilisant plusieurs répartiteurs indépendants, on aurais le problème du P de CAP, 
+c'est à dire que le système peut devenir partitionné et que les répartiteurs peuvent essayer
+d'assigner les mêmes tâches à deux serveurs sans se coordoner.  
+
+* TODO Conclusion et implémentations alternatives. 

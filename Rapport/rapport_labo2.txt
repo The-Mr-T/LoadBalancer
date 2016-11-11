@@ -1,0 +1,87 @@
+Tests de performance – mode sécurisé
+
+Présentez le graphique du temps d'exécution en fonction du nombre de serveurs. Expliquez les
+résultats en faisant des liens avec vos choix d'implémentation.
+
+Tests de performance – mode non-sécurisé
+
+Présentez et expliquez les temps obtenus.
+
+Question 1: Le système distribué tel que présenté dans cet énoncé devrait être résilient aux pannes
+des serveurs de calcul. Cependant, le répartiteur demeure un maillon faible. Présentez une
+architecture qui permette d'améliorer la résilience du répartiteur. Quels sont les avantages et les
+inconvénients de votre solution? Quels sont les scénarios qui causeraient quand même une panne du
+système?
+
+10 falacies
+The network is reliable.
+Latency is zero.
+Bandwidth is infinite.
+The network is secure.
+Topology doesn't change.
+There is one administrator.
+Transport cost is zero.
+The network is homogeneous.
+
+
+
+Rapport
+Puisque vous avez beaucoup de liberté pour ce travail pratique, chaque équipe devrait obtenir un
+résultat assez différent. Votre court rapport devrait donc mentionner et expliquer les différents choix
+que vous avez faits pendant la conception: la façon dont le répartiteur divise les tâches et gère les
+tâches échouées, comment le système détecte une panne intempestive, etc. Pourquoi avez-vous fait
+ces choix de préférence à d'autres ?
+
+* TODO Introduction 
+
+* TODO Présentation de l'architecture
+
+** TODO Déterminer le temps d'exécution des opérations 
+*** TODO Pel(0 -- 50)
+**** TODO fonction pour estimer 
+**** TODO graph
+*** TODO prime(0 -- MAX_INT)
+**** TODO fonction pour estimer 
+**** TODO graph
+** TODO Gestion des serveurs morts
+Puisque nous utilisons Java RMI, 
+** TODO Formation des "chunks de travail"
+Puisque les opérations sont additionnés entres elles tout est commutatif, donc on peut 
+séparer le travail comme on veux. En utilisant les métriques de temps de calcul trouvés
+plus tôt, on peut créer des lots de travail de "valeurs" approximativement égales.
+** TODO Déterminer la capacité de chaque serveur 
+*** TODO Attribuer un ID unique à chaque serveur (hardware key (MAC ? ) + timestamp)
+*** TODO Envoyer des lots de travail de plus en plus gros
+**** TODO Quand un lot est rejeté, diminuer de 1 la taille, placer l'élément rejeté dans le pool
+**** TODO Si taille max spécifiée, le faire avec un tri dichotomique ? 
+** TODO Ajustement du répartiteur en fonction des serveurs 
+*** TODO Mesurer les performances de chaque lot par rapport au facteur heuristique calculé
+Le but est d'avoir aussi une approximation du facteur de qualité du réseau
+*** TODO Ajustement de la difficulté des items de travail. 
+Les noeuds ayant une moins grande capacité réelle se font attribuer des lots de travail plus 
+faciles, permettant d'avoir des lots plus équilibrés. 
+* TODO Test de performance - mode sécurisé 
+
+* TODO Test de performance - Mode non-sécurisé
+
+* TODO Réponse Question 1
+Question 1: Le système distribué tel que présenté dans cet énoncé devrait être résilient aux pannes
+des serveurs de calcul. Cependant, le répartiteur demeure un maillon faible. Présentez une
+architecture qui permette d'améliorer la résilience du répartiteur. Quels sont les avantages et les
+inconvénients de votre solution? Quels sont les scénarios qui causeraient quand même une panne du
+système?
+
+Problème du théorème CAP
+
+"In theoretical computer science, the CAP theorem, also named Brewer's theorem after computer scientist Eric Brewer, states that it is impossible for a distributed computer system to simultaneously provide all three of the following guarantees:[1][2][3]
+
+Consistency (every read receives the most recent write or an error)
+Availability (every request receives a response, without guarantee that it contains the most recent version of the information)
+Partition tolerance (the system continues to operate despite arbitrary partitioning due to network failures)
+In other words, the CAP theorem states that in the presence of a network partition, one has to choose between consistency and availability."
+
+- En utilisant plusieurs répartiteurs indépendants, on aurais le problème du P de CAP, 
+c'est à dire que le système peut devenir partitionné et que les répartiteurs peuvent essayer
+d'assigner les mêmes tâches à deux serveurs sans se coordoner.  
+
+* TODO Conclusion et implémentations alternatives. 
