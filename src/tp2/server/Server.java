@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * Created by Rusty on 11/10/2016.
  */
-public abstract class Server implements ServerInterface
+public class Server implements ServerInterface
 {
     public static void main(String[] args)
     {
@@ -23,19 +23,33 @@ public abstract class Server implements ServerInterface
 
         Server server = null;
         if (args[0].equals("safe"))
-            server = new SafeServer(Integer.parseInt(args[1]), Integer.parseInt(args[2]));
-        else if (args[1].equals("unsafe"))
-            server = new UnsafeServer(Integer.parseInt(args[1]), Integer.parseInt(args[2]), Integer.parseInt(args[3]));
+            server = new Server(Integer.parseInt(args[1]), Integer.parseInt(args[2]));
+        else if (args[0].equals("unsafe"))
+            server = new Server(Integer.parseInt(args[1]), Integer.parseInt(args[2]), Integer.parseInt(args[3]));
+        else throw new IllegalArgumentException();
 
         server.run();
     }
 
     private int _port;
     private int _qi;
+    private int _maliciousness;
     protected Server(int port, int qi)
     {
+        super();
+
         _port = port;
         _qi = qi;
+        _maliciousness = 0;
+    }
+
+    protected Server(int port, int qi, int maliciousness)
+    {
+        super();
+
+        _port = port;
+        _qi = qi;
+        _maliciousness = maliciousness;
     }
 
     private void run()
@@ -64,6 +78,7 @@ public abstract class Server implements ServerInterface
     public int executeRequests(List<Operation> opList) throws RemoteException, OperationRefusedException
     {
         int opCount = opList.size();
+	System.out.println("RECEIVED REQUEST FOR " + opCount + " OPERATIONS");
         if (opCount > _qi)
         {
             double failProb = (opCount - _qi) / (4 * _qi);
@@ -71,8 +86,18 @@ public abstract class Server implements ServerInterface
                 throw new OperationRefusedException();
         }
 
-        return executeMaybeMalicious(opList);
-    }
+        if (Math.random() * 100 < _maliciousness)
+            return (int)(Math.random() * Integer.MAX_VALUE);
 
-    protected abstract int executeMaybeMalicious(List<Operation> opList);
+        int sum = 0;
+
+        for (Operation op : opList)
+        {
+            int result = op.execute();
+            sum += result;
+            sum %= 4000;
+        }
+
+        return sum;
+    }
 }

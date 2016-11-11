@@ -63,22 +63,33 @@ public class LoadBalancer
         return list;
     }
 
-    private static ServerInterface loadServer(String hostname)
+    private static ServerInterface loadServer(String hostnamePair)
     {
-        if (hostname.isEmpty())
+        if (hostnamePair.isEmpty())
             throw new IllegalArgumentException();
+
+        String[] pair = hostnamePair.split(":");
+        if (pair.length != 2)
+            throw new IllegalArgumentException();
+
+        String hostname = pair[0];
+        int port = Integer.parseInt(pair[1]);
+
+        System.out.println("Hostname: " + hostname + ", port: " + port);
 
         ServerInterface result = null;
 
         try
         {
             Registry registry = LocateRegistry.getRegistry(hostname);
+            System.out.println("Located the registry successfully.");
             result = (ServerInterface) registry.lookup("server");
         } catch (NotBoundException e) {
             System.err.println("Erreur: le nom '" + e.getMessage() + "' n'est pas defini dans le registre");
             System.exit(-1);
         } catch (RemoteException e) {
             System.err.println("Erreur: " + e.getMessage());
+            System.err.println("TYPE NAME: " + e.getClass().getName());
             System.exit(-1);
         }
 
@@ -123,6 +134,8 @@ public class LoadBalancer
 
                 firstIndexDone = firstIndexTODO + currentQ < firstIndexDone ? firstIndexTODO + currentQ : firstIndexDone;
 
+		System.out.println("FIRST INDEX TODO: " + firstIndexTODO);
+		System.out.println("FIRSTINDEXDONE: " + firstIndexDone);
                 List<Operation> subList = new ArrayList<>();
                 for (int j = firstIndexTODO; i < firstIndexDone; i++) {
                     Operation current = requestList.get(j);
@@ -130,7 +143,7 @@ public class LoadBalancer
                     subList.add(current);
                 }
 
-                ServerRequest request = new ServerRequest(server, subList);
+                ServerRequest request = new ServerRequest(server, subList, true);
                 futureList.add(threadPool.submit(request));
             }
 

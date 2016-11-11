@@ -1,11 +1,12 @@
 package tp2.shared;
 
 import java.util.concurrent.Callable;
+import java.io.Serializable;
 
 /**
  * Created by Rusty on 11/10/2016.
  */
-public class Operation
+public class Operation implements Serializable
 {
     private String operation;
     private int value;

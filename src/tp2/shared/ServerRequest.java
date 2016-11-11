@@ -10,15 +10,21 @@ public class ServerRequest implements Callable<Integer>
 {
     private ServerInterface server;
     private List<Operation> operations;
+    private boolean isSafeMode;
 
-    public ServerRequest(ServerInterface serverInterface, List<Operation> operationList)
+    public ServerRequest(ServerInterface serverInterface, List<Operation> operationList, boolean safeMode)
     {
         server = serverInterface;
         operations = operationList;
+        isSafeMode = safeMode;
     }
 
     public Integer call() throws Exception
     {
-        return server.executeRequests(operations);
+        Integer result = server.executeRequests(operations);
+        for (Operation op : operations)
+            if (isSafeMode)
+                op.status = Status.DONE;
+        return result;
     }
 }
