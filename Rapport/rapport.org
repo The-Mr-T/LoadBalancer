@@ -58,7 +58,9 @@ sous-unitées plus simples et de répartir ces tâches équitablement entre les 
 Notre répartiteur est un seul prgramme s'exécutant sur une machine et distribuant du travail à plusieurs noeuds de calculs.
 C'est une architecture maître-esclave classique. 
 Si le fait d'avoir plusieurs noeuds de calcul permet une redondance du système, le répartiteur en soi est un "singleton" et 
-ne comprend aucun mécanisme de redondance et représente un point unique de défaillance. 
+ne comprend aucun mécanisme de redondance et représente un point unique de défaillance. Notre implémentation se doit d'être robuste et 
+a donc été développé avec un style défensif. Les "10 falacies of distributed computing" ont été prise en compte lors de l'élaboration et implémentation
+de notre architecture. 
 
 ** TODO Déterminer le temps d'exécution des opérations 
 *** TODO Pel(0 -- 50)
@@ -105,11 +107,12 @@ Notre approche serait de faire fonctionner plusieurs répartiteurs en parralèle
 un répartisseur de tomber en panne sans arrêter le ssytème au complet. Dans un scénario idéal, les répartisseurs 
 communiqueraient entre-eux afin de se distribuer un sous-ensemble des tâches à efectuer et confirmer aux autres répartisseurs 
 les tâches ayant été données au noeuds de calculs et ayant été complétés, pour éviter qu'une même tâche ne soit exécuté deux fois
-et comptabilisé deux fois. 
+et comptabilisé deux fois. Ce n'est pas exceptionellement grave si une tâche est exécuté deux fois, en autant que cette dernière ne sois 
+pas comptabilisé deux fois lors de la réduction. 
 
-Problème du théorème CAP
+ - Problème du théorème CAP
 
-"In theoretical computer science, the CAP theorem, also named Brewer's theorem after computer scientist Eric Brewer, states that it is impossible for a distributed computer system to simultaneously provide all three of the following guarantees:[1][2][3]
+ - "In theoretical computer science, the CAP theorem, also named Brewer's theorem after computer scientist Eric Brewer, states that it is impossible for a distributed computer system to simultaneously provide all three of the following guarantees:[1][2][3]
 
 Consistency (every read receives the most recent write or an error)
 Availability (every request receives a response, without guarantee that it contains the most recent version of the information)
@@ -122,6 +125,21 @@ On aurais le problème du P du théorème CAP, c'est à dire que le système peu
 peuvent essayer d'assigner les mêmes tâches à deux serveurs sans se coordoner. Notre système doit donc faire le choix entre rester
 disponible ou être consistant. 
 
+Une solution serait de donner une copie de l'ensemble des tâches à réaliser à chaque répartisseur et d'utiliser des messages de synchronisation pour s'assurer que les 
+tâches ne soient exécutées qu'une seule fois et comptabilisé une seule fois. Dans le cas d'un partinionnement, un seul des deux serveurs devrait continuer d'opérer normalement, 
+un serveur dit "chef", l'autre se mettant en attente du premier serveur afin de se faire renvoyer la liste des tâches efectuées depuis le partitionnement par le serveur 
+afin de pouvoir continuer l'exécution à deux serveurs en paralèle. Cette approche permet une consistance des données (on retombe dans le cas du maître-esclave traditionnel
+et du singleton) mais le système sera plus lent et moins disponible. 
+
+Un problème de cette approche est toutefois d'identifier le partitionnement lorsque ce dernier se produit et de déterminer quel répartisseur doit agir comme "chef". Le cas trivial d'un 
+serveur tôtalement déconnecté du réseau est évident à traiter, puisque ce dernier ne peut plus voir aucun autre noeud ou répartisseur, mais le cas où la partition isole les répartisseurs 
+l'un de l'autre mais où des noeuds de calculs sont toujours accessibles, déterminer un chef est un problème de taille en sois. Une solution serait de choisir une machine tierce comme point de 
+référence pour notre système, comme une switch réseau centrale où un serveur particulièrement robuste. En cas de partitionnement, tout serveur étant capable de rejoindre cette pièce d'équipement 
+sera le répartisseur "chef". Cette solution permet même à cette pièce d'équipement, de signaler qu'elle a déjà donné le contrôle à un autre répartisseur, si deux répartisseurs sont capable de la contacter. 
+Cette solution est toutefois vulnérable à d'autres scénarios de partinionnemnt. 
+
+Une autre approche est de faire travailler les répartisseurs comme si de rien était mais sans effectuer la réduction finale sur les résultats des calculs. Quand un autre répartisseur reviendra accessible, 
+ces derniers communiqueront quelles opérations ils ont effectués et s'assureront d'effectuer la réduction uniquement une fois sur chaque opération. 
 
 
 * TODO Conclusion et implémentations alternatives. 
