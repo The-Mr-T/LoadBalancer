@@ -52,7 +52,13 @@ Ces valeurs, multipliées par la quantité de disques fonctionnant en même temp
 Le fait de répartir un système sur un ensemble de machines reliés entres-elles par un réseau implique aussi de devoir séparer un ensemble de tâches en 
 sous-unitées plus simples et de répartir ces tâches équitablement entre les noeuds du réseau afin d'obtenir une performance optimale. 
 
+
 * TODO Présentation de l'architecture
+
+Notre répartiteur est un seul prgramme s'exécutant sur une machine et distribuant du travail à plusieurs noeuds de calculs.
+C'est une architecture maître-esclave classique. 
+Si le fait d'avoir plusieurs noeuds de calcul permet une redondance du système, le répartiteur en soi est un "singleton" et 
+ne comprend aucun mécanisme de redondance et représente un point unique de défaillance. 
 
 ** TODO Déterminer le temps d'exécution des opérations 
 *** TODO Pel(0 -- 50)
@@ -95,6 +101,12 @@ architecture qui permette d'améliorer la résilience du répartiteur. Quels son
 inconvénients de votre solution? Quels sont les scénarios qui causeraient quand même une panne du
 système?
 
+Notre approche serait de faire fonctionner plusieurs répartiteurs en parralèle, afin de permettre à 
+un répartisseur de tomber en panne sans arrêter le ssytème au complet. Dans un scénario idéal, les répartisseurs 
+communiqueraient entre-eux afin de se distribuer un sous-ensemble des tâches à efectuer et confirmer aux autres répartisseurs 
+les tâches ayant été données au noeuds de calculs et ayant été complétés, pour éviter qu'une même tâche ne soit exécuté deux fois
+et comptabilisé deux fois. 
+
 Problème du théorème CAP
 
 "In theoretical computer science, the CAP theorem, also named Brewer's theorem after computer scientist Eric Brewer, states that it is impossible for a distributed computer system to simultaneously provide all three of the following guarantees:[1][2][3]
@@ -104,8 +116,13 @@ Availability (every request receives a response, without guarantee that it conta
 Partition tolerance (the system continues to operate despite arbitrary partitioning due to network failures)
 In other words, the CAP theorem states that in the presence of a network partition, one has to choose between consistency and availability."
 
-- En utilisant plusieurs répartiteurs indépendants, on aurais le problème du P de CAP, 
-c'est à dire que le système peut devenir partitionné et que les répartiteurs peuvent essayer
-d'assigner les mêmes tâches à deux serveurs sans se coordoner.  
+Utiliser plusieurs répartiteurs indépendants pose toutefois un problème de taille : Une mauvaise configuration ou un problème 
+de réseau peut maintenant partitonner notre infrastructure en deux, tel que les répartisseurs ne se "voient" plus. 
+On aurais le problème du P du théorème CAP, c'est à dire que le système peut devenir partitionné et que les répartiteurs 
+peuvent essayer d'assigner les mêmes tâches à deux serveurs sans se coordoner. Notre système doit donc faire le choix entre rester
+disponible ou être consistant. 
+
+
 
 * TODO Conclusion et implémentations alternatives. 
+
