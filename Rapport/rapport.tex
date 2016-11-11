@@ -195,6 +195,15 @@ répartiteur à diminuer le nombre d'opérations dans sa requête.
 %Les noeuds ayant une moins grande capacité réelle se font attribuer des lots de travail plus 
 %faciles, permettant d'avoir des lots plus équilibrés. 
 \section{Test de performance - mode sécurisé}
+L'exécution de \emph{operation-588} en mode sécuritaire donne les résultats présentés à la figure \ref{fig:safe}.
+
+\begin{figure}
+  \includegraphics[width=\linewidth]{safe_exec.eps}
+  \captionun{ Exécution des différents tests de performance en mode sécuritaire }
+  \label{fig:safe}
+\end{figure}
+
+On constate une amélioration de la performance lorsque plus de serveurs sont utilisés
 
 \section{Test de performance - Mode non-sécurisé}
 
@@ -281,7 +290,7 @@ pénalité imposé par le réseau pour utiliser ce nœud en particulier.
 Il serait aussi possible d'obtenir le facteur d'utilisation des serveurs directement en les interrogeant plutôt qu'en envoyant des lots de travail de taille 
 aléatoire. Théoriquement, rien n'empêche le serveur de renvoyer des informations sur sa charge de travail actuelle.
 
-
+Finalement, il serait aussi possible de mieux équilibrer la charge de travail entre différents lots de même taille.Puisque le temps de calcul du plus grand nombre premier crois linéairement avec la valeur du nombre à traiter, un lot de travail comportant uniquement des nombres de très grande valeur sera plus long à exécuter qu'un lot de même taille comportant des valeurs très petites. Pour équilibrer les lots, il faudrait mesurer la performance des opérations afin d'assigner une valeur estimée de difficulté pour une opération donnée et tenter de former les lots de travail de façon à ce que la somme des difficultés soit relativement uniforme d'un lot à l'autre. 
 
 
 \end{document}
