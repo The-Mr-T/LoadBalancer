@@ -59,8 +59,13 @@ Notre répartiteur est un seul prgramme s'exécutant sur une machine et distribu
 C'est une architecture maître-esclave classique. 
 Si le fait d'avoir plusieurs noeuds de calcul permet une redondance du système, le répartiteur en soi est un "singleton" et 
 ne comprend aucun mécanisme de redondance et représente un point unique de défaillance. Notre implémentation se doit d'être robuste et 
-a donc été développé avec un style défensif. Les "10 falacies of distributed computing" ont été prise en compte lors de l'élaboration et implémentation
+a donc été développé avec un style défensif. Certaines des "10 falacies of distributed computing" ont été prise en compte lors de l'élaboration et implémentation
 de notre architecture. 
+
+Le serveur lui-même est écrit en utilisant un thread-pool afin de gérer les serveurs de calcul. C'est une solution plus élégante et simple que 
+d'attribuer un thread par noeud de calcul, en raison du grand nombre potentiel de noeuds et du fait que 
+
+
 
 ** TODO Déterminer le temps d'exécution des opérations 
 *** TODO Pel(0 -- 50)
@@ -77,6 +82,7 @@ entre le répartiteur et les noeuds étant encapsulé dans la couche de Java RMI
 résseayer d'attribuer du travail au noeud ne répondant pas. Si la panne persiste, le répartiteur retirera simplement le noeud de calcul de sa liste de noeuds valides. La panne peut se
 produire n'importe-quand durant l'exécution du lot de travail, puisque l'exécution d'un lot de travail est une opération atomique du point de vue du répartiteur (elle est soit exécutée au complet, 
 refusée ou une exception est levée par Java RMI signalant qu'il est impossible de l'exécuter). 
+
 ** TODO Formation des "chunks de travail"
 Puisque les opérations sont additionnés entres elles tout est commutatif, donc on peut 
 séparer le travail comme on veux. En utilisant les métriques de temps de calcul trouvés
