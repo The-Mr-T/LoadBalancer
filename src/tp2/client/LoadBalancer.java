@@ -69,8 +69,6 @@ public class LoadBalancer
             throw new IllegalArgumentException();
 
         String[] pair = hostnamePair.split(":");
-        if (pair.length != 2)
-            throw new IllegalArgumentException();
 
         String hostname = pair[0];
         int port = Integer.parseInt(pair[1]);
@@ -81,7 +79,7 @@ public class LoadBalancer
 
         try
         {
-            Registry registry = LocateRegistry.getRegistry(hostname);
+            Registry registry = LocateRegistry.getRegistry(hostname, port);
             System.out.println("Located the registry successfully.");
             result = (ServerInterface) registry.lookup("server");
         } catch (NotBoundException e) {
@@ -89,7 +87,6 @@ public class LoadBalancer
             System.exit(-1);
         } catch (RemoteException e) {
             System.err.println("Erreur: " + e.getMessage());
-            System.err.println("TYPE NAME: " + e.getClass().getName());
             System.exit(-1);
         }
 
