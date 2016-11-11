@@ -4,6 +4,6 @@
 \contentsline {subsection}{\numberline {2.1}Gestion des serveurs morts}{5}
 \contentsline {subsection}{\numberline {2.2}D\IeC {\'e}terminer la capacit\IeC {\'e} de chaque serveur }{5}
 \contentsline {section}{\numberline {3}Test de performance - mode s\IeC {\'e}curis\IeC {\'e}}{6}
-\contentsline {section}{\numberline {4}Test de performance - Mode non-s\IeC {\'e}curis\IeC {\'e}}{6}
-\contentsline {section}{\numberline {5}R\IeC {\'e}ponse Question 1}{6}
+\contentsline {section}{\numberline {4}Test de performance - Mode non-s\IeC {\'e}curis\IeC {\'e}}{7}
+\contentsline {section}{\numberline {5}R\IeC {\'e}ponse Question 1}{8}
 \contentsline {section}{\numberline {6}Conclusion et impl\IeC {\'e}mentations alternatives.}{11}

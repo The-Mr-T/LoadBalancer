@@ -195,17 +195,22 @@ répartiteur à diminuer le nombre d'opérations dans sa requête.
 %Les noeuds ayant une moins grande capacité réelle se font attribuer des lots de travail plus 
 %faciles, permettant d'avoir des lots plus équilibrés. 
 \section{Test de performance - mode sécurisé}
-L'exécution de \emph{operation-588} en mode sécuritaire donne les résultats présentés à la figure \ref{fig:safe}.
+L'exécution de \emph{operation-588} en mode sécuritaire donne les résultats présentés à la figure \ref{fig:safe}. Ces chiffres ont été obtenus en exécutant les serveurs et le client localement sur une machine. 
 
 \begin{figure}
   \includegraphics[width=\linewidth]{safe_exec.eps}
-  \captionun{ Exécution des différents tests de performance en mode sécuritaire }
+  \caption{ Exécution des différents tests de performance en mode sécuritaire }
   \label{fig:safe}
 \end{figure}
 
-On constate une amélioration de la performance lorsque plus de serveurs sont utilisés
+On constate une amélioration de la performance lorsque plus de serveurs sont utilisés. Ceci s'explique par le fait que les
+opérations sont fortement paralélisables. Puisque les tests ont été effectués sur une seule machine, il est impossible d'observer l'effet que le réseau aurait sur les résultats. On peut en revanche spéculer que dans l'environnemen du laboratoire, les performances seraient uniformément ralentie en raison de l'homogéniété du réseau local ainsi que de la petite taille des lots de travail et des appels de fonctions. 
 
 \section{Test de performance - Mode non-sécurisé}
+
+L'exécution de \emph{operation-588} en mode non-sécuritaire est plus lent que les résultats obtenus en utilisant les serveurs sécuritaires. Ceci est du à la nécéssité d'établir un consensus sur la valeur corecte des résultats avant de déclarer une opération comme complétée. L'algorithme de consensus consiste simplement à déclarer une valeur bonne si deux serveurs malicieux retourne la même valeur. Tant que deux serveurs n'auront pas retournés la même valeur, le répartiteur continuera d'attribuer le lot de travail correspondant à d'autre serveurs de calculs. Puisque un serveur malveillant envois une réponse aléatoire, il es peu probable que un serveur renvois deux fois la même réponse erroné. Ce cas extrèmenent rare causerait un re-calcul de l'ensemble des opérations puisque la somme de contrôle donnée avec chaque lot de travail ne corresponderait pas. Ce cas est extrèmenent lourd en terme de calculs mais se produira extrèmenent rarement, c'est pourquoi il a été décidé d'utiliser seulement un consensus à deux valeurs plutôt que 3, afin d'amortir le coût d'un recalcul complêt sur un très grand nombre d'opérations épargnées.
+
+En faisant varier le pourcentage de réponses volotairement erronées des serveurs malveillants, on peut observer une dégradation de la performance causée par un plus grand nombre d'essais en moyenne avant d'obtenir deux résultats identiques. 
 
 \section{Réponse Question 1}
 Question 1: Le système distribué tel que présenté dans cet énoncé devrait être résilient aux pannes
@@ -289,6 +294,8 @@ pénalité imposé par le réseau pour utiliser ce nœud en particulier.
 
 Il serait aussi possible d'obtenir le facteur d'utilisation des serveurs directement en les interrogeant plutôt qu'en envoyant des lots de travail de taille 
 aléatoire. Théoriquement, rien n'empêche le serveur de renvoyer des informations sur sa charge de travail actuelle.
+
+Il aurait été possible de tenter d'estimer l'honnêteté d'un serveur non-sécuritaire afin d'envoyer plus de requêtes aux serveurs donnant les bons résultat la majorité du temps. 
 
 Finalement, il serait aussi possible de mieux équilibrer la charge de travail entre différents lots de même taille.Puisque le temps de calcul du plus grand nombre premier crois linéairement avec la valeur du nombre à traiter, un lot de travail comportant uniquement des nombres de très grande valeur sera plus long à exécuter qu'un lot de même taille comportant des valeurs très petites. Pour équilibrer les lots, il faudrait mesurer la performance des opérations afin d'assigner une valeur estimée de difficulté pour une opération donnée et tenter de former les lots de travail de façon à ce que la somme des difficultés soit relativement uniforme d'un lot à l'autre. 
 
