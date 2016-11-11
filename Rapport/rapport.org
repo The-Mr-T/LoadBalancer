@@ -58,7 +58,21 @@ sous-unitées plus simples et de répartir ces tâches équitablement entre les 
 Notre répartiteur est un seul prgramme s'exécutant sur une machine et distribuant du travail à plusieurs noeuds de calculs.
 C'est une architecture maître-esclave classique. 
 Si le fait d'avoir plusieurs noeuds de calcul permet une redondance du système, le répartiteur en soi est un "singleton" et 
-ne comprend aucun mécanisme de redondance et représente un point unique de défaillance. 
+ne comprend aucun mécanisme de redondance et représente un point unique de défaillance. Notre implémentation se doit d'être robuste et 
+a donc été développé avec un style défensif. Certaines des "10 falacies of distributed computing" ont été prise en compte lors de l'élaboration et implémentation
+de notre architecture. 
+
+Le serveur lui-même est écrit en utilisant un thread-pool afin de gérer les serveurs de calcul. C'est une solution plus élégante et simple que 
+d'attribuer un thread par noeud de calcul, en raison du grand nombre potentiel de noeuds et du fait que les serveurs ne sont pas utilisés de façon intenssive 
+(on attribut un lot de travail et on attend de recevoir le résultat). 
+
+Java RMI a été utilisé afin d'implémenter l'exécution de méthodes à distances. Ceci évite d'avoir à implémenter sois-même la couche réseau et permet
+de profiter du mécanisme d'exceptions de Java ainsi que pouvoir isoler les erreurs de réseau lors du développement de l'application. L'utilisation 
+de Java permet aussi de faire appel à des fonctions du langages, comme les Futures, simplifiant grandement la réduction effectuée par le répartisseur. Celui-ci
+attend en effet simplement que les Futures soient disponibles. La communication entre les noeuds et le répartisseur est donc asynchrone par nature.  
+
+L'implémentation non-sécuritaire repose sur un consensus où une majorité de machines doivent donner le même résultat pour une série d'opération données 
+afin d'être considéré comme valide. 
 
 ** TODO Déterminer le temps d'exécution des opérations 
 *** TODO Pel(0 -- 50)
@@ -75,15 +89,19 @@ entre le répartiteur et les noeuds étant encapsulé dans la couche de Java RMI
 résseayer d'attribuer du travail au noeud ne répondant pas. Si la panne persiste, le répartiteur retirera simplement le noeud de calcul de sa liste de noeuds valides. La panne peut se
 produire n'importe-quand durant l'exécution du lot de travail, puisque l'exécution d'un lot de travail est une opération atomique du point de vue du répartiteur (elle est soit exécutée au complet, 
 refusée ou une exception est levée par Java RMI signalant qu'il est impossible de l'exécuter). 
+
 ** TODO Formation des "chunks de travail"
-Puisque les opérations sont additionnés entres elles tout est commutatif, donc on peut 
-séparer le travail comme on veux. En utilisant les métriques de temps de calcul trouvés
-plus tôt, on peut créer des lots de travail de "valeurs" approximativement égales.
+%Puisque les opérations sont additionnés entres elles tout est commutatif, donc on peut 
+%séparer le travail comme on veux. En utilisant les métriques de temps de calcul trouvés
+%plus tôt, on peut créer des lots de travail de "valeurs" approximativement égales.
 ** TODO Déterminer la capacité de chaque serveur 
-*** TODO Attribuer un ID unique à chaque serveur (hardware key (MAC ? ) + timestamp)
-*** TODO Envoyer des lots de travail de plus en plus gros
-**** TODO Quand un lot est rejeté, diminuer de 1 la taille, placer l'élément rejeté dans le pool
-**** TODO Si taille max spécifiée, le faire avec un tri dichotomique ? 
+Chaque serveur est vu comme une entité unique ayant des propriétés distinctes par le répartisseur. Le répartisseur ignorant le facteur q de chaque
+serveur, ce dernier doit l'estimer. La stratégie pour estimer le faxcteur q est d'envoyer un lot de travail d'une taille donnée. Si ce dernier est accepté, on 
+conserve la taille du lot de travail. Si ce dernier est refusé, on diminue la taille du lot de travail d'une opération et on tente de la re-soumetre. L'opération 
+retirée est replacée dans la liste des opérations en attente et sera ajoutés à un prochain lot de travail. Une taille de 15 comme lot de travail initial a été 
+choisie de façon empirique à partir des valeurs de q typiques données dans l'énoncé. Le fait de choisir un q légèrement plus gros que les valeurs de l'énoncé permet
+de profiter du fait que certaines opérations où q > u pouraient quand-même être exécutées avant que, statistiquement, une d'entre-elles échoue et force le 
+répartisseur à diminuer le nombre d'opérations dans sa requête. 
 ** TODO Ajustement du répartiteur en fonction des serveurs 
 *** TODO Mesurer les performances de chaque lot par rapport au facteur heuristique calculé
 Le but est d'avoir aussi une approximation du facteur de qualité du réseau
@@ -105,16 +123,17 @@ Notre approche serait de faire fonctionner plusieurs répartiteurs en parralèle
 un répartisseur de tomber en panne sans arrêter le ssytème au complet. Dans un scénario idéal, les répartisseurs 
 communiqueraient entre-eux afin de se distribuer un sous-ensemble des tâches à efectuer et confirmer aux autres répartisseurs 
 les tâches ayant été données au noeuds de calculs et ayant été complétés, pour éviter qu'une même tâche ne soit exécuté deux fois
-et comptabilisé deux fois. 
+et comptabilisé deux fois. Ce n'est pas exceptionellement grave si une tâche est exécuté deux fois, en autant que cette dernière ne sois 
+pas comptabilisé deux fois lors de la réduction. 
 
-Problème du théorème CAP
+% - Problème du théorème CAP
 
-"In theoretical computer science, the CAP theorem, also named Brewer's theorem after computer scientist Eric Brewer, states that it is impossible for a distributed computer system to simultaneously provide all three of the following guarantees:[1][2][3]
+% - "In theoretical computer science, the CAP theorem, also named Brewer's theorem after computer scientist Eric Brewer, states that it is impossible for a distributed computer system to simultaneously provide all three of the following guarantees:[1][2][3]
 
-Consistency (every read receives the most recent write or an error)
-Availability (every request receives a response, without guarantee that it contains the most recent version of the information)
-Partition tolerance (the system continues to operate despite arbitrary partitioning due to network failures)
-In other words, the CAP theorem states that in the presence of a network partition, one has to choose between consistency and availability."
+% Consistency (every read receives the most recent write or an error)
+%Availability (every request receives a response, without guarantee that it contains the most recent version of the information)
+%Partition tolerance (the system continues to operate despite arbitrary partitioning due to network failures)
+%In other words, the CAP theorem states that in the presence of a network partition, one has to choose between consistency and availability."
 
 Utiliser plusieurs répartiteurs indépendants pose toutefois un problème de taille : Une mauvaise configuration ou un problème 
 de réseau peut maintenant partitonner notre infrastructure en deux, tel que les répartisseurs ne se "voient" plus. 
@@ -122,7 +141,35 @@ On aurais le problème du P du théorème CAP, c'est à dire que le système peu
 peuvent essayer d'assigner les mêmes tâches à deux serveurs sans se coordoner. Notre système doit donc faire le choix entre rester
 disponible ou être consistant. 
 
+Une solution serait de donner une copie de l'ensemble des tâches à réaliser à chaque répartisseur et d'utiliser des messages de synchronisation pour s'assurer que les 
+tâches ne soient exécutées qu'une seule fois et comptabilisé une seule fois. Dans le cas d'un partinionnement, un seul des deux serveurs devrait continuer d'opérer normalement, 
+un serveur dit "chef", l'autre se mettant en attente du premier serveur afin de se faire renvoyer la liste des tâches efectuées depuis le partitionnement par le serveur 
+afin de pouvoir continuer l'exécution à deux serveurs en paralèle. Cette approche permet une consistance des données (on retombe dans le cas du maître-esclave traditionnel
+et du singleton) mais le système sera plus lent et moins disponible. 
 
+Un problème de cette approche est toutefois d'identifier le partitionnement lorsque ce dernier se produit et de déterminer quel répartisseur doit agir comme "chef". Le cas trivial d'un 
+serveur tôtalement déconnecté du réseau est évident à traiter, puisque ce dernier ne peut plus voir aucun autre noeud ou répartisseur, mais le cas où la partition isole les répartisseurs 
+l'un de l'autre mais où des noeuds de calculs sont toujours accessibles, déterminer un chef est un problème de taille en sois. Une solution serait de choisir une machine tierce comme point de 
+référence pour notre système, comme une switch réseau centrale où un serveur particulièrement robuste. En cas de partitionnement, tout serveur étant capable de rejoindre cette pièce d'équipement 
+sera le répartisseur "chef". Cette solution permet même à cette pièce d'équipement, de signaler qu'elle a déjà donné le contrôle à un autre répartisseur, si deux répartisseurs sont capable de la contacter. 
+Cette solution est toutefois vulnérable à d'autres scénarios de partinionnemnt. 
+
+Une autre approche est de faire travailler les répartisseurs comme si de rien était mais sans effectuer la réduction finale sur les résultats des calculs. Quand un autre répartisseur reviendra accessible, 
+ces derniers communiqueront quelles opérations ils ont effectués et s'assureront d'effectuer la réduction uniquement une fois sur chaque opération. 
+
+Une dernière approche serait de donner des états aux serveurs de calcul, mais cette approche comporte aussi son lot de problèmes additionnels. 
+Nous préféront grandement une implémentation où les serveurs de calculs agissent sans conserver d'états, comme dans une architecture REST traditionelle. 
 
 * TODO Conclusion et implémentations alternatives. 
 
+En terme d'optimisations, notre répartisseur repose sur plusieurs heuristiques (choix du nombre de requêtes initial) n'ayant pas été étudiés. 
+Un profilage détaillé de l'application ainsi que la variation de ces paramètres pourrait permettre de les fixer à des valeurs optimales en fonction
+du type de charge de travail à effectuer. De plus, notre implémentation se base sur un réseau relativement fiable et constant en terme de latence et de débit. 
+Aucune optimisation n'est effectués pour se protéger d'un réseau fiable mais au performances aléatoires. À titre d'exemple, le choix des serveurs ne se fait pas 
+en prenant en compte la performance du réseau. Un serveur innocupé mais connecté à un réseau très lent sera favorisé par rapport à un serveur très occupé mais connecté
+à un réseau très rapide et offrant, au final, de meilleures performances. Une façon de remédier à ce problème serait de faire mesurer le temps de réponse d'un serveur
+pour une requête donnée par le répartisseur et la comparer à une valeur heuristique correspondant à l'exécution locale de ce lot de travail afin de déterminer la
+pénalité imposé par le réseau pour utiliser ce noeud en particulier. 
+
+Il serait aussi possible d'optenir le facteur d'utilisation des serveurs directement en les interrogeant plutôt qu'en envoyant des lots de travail de taille 
+aléatoire. Théoriquement, rien n'empêche le serveur de renvoyer des informations sur sa charge de travail actuelle.
