@@ -112,9 +112,9 @@ Systèmes répartis et infonuagique
 
 \section{Introduction}
 
-Une des idées principales d'un système répartis est d'être résilient, c'est à dire fortement tolérant aux pannes.
+Une des idées principales d'un système réparti est d'être résilient, c'est-à-dire fortement tolérant aux pannes.
 Il serait en effet impossible, pour n'importe quel système de taille non-triviale, de garantir le fonctionnement 
-simultané de toute les machines le composant. Google a estimé, dans une étude publiée en 2007 \footnote{\url{https://static.googleusercontent.com/external_content/untrusted_dlcp/research.google.com/en//archive/disk_failures.pdf}}, que la probabilité qu'un disque dur 
+simultané de toutes les machines le composant. Google a estimé, dans une étude publiée en 2007 \footnote{\url{https://static.googleusercontent.com/external_content/untrusted_dlcp/research.google.com/en//archive/disk_failures.pdf}}, que la probabilité qu'un disque dur 
 brise pendant une année d'utilisation normale est de 1.7\% pour un disque neuf et de 8.6\% pour un disque de trois ans. 
 
 %"actual annualized failure rates (AFRs) for individual drives ranged from 1.7% for first year drives to over 8.6% for three-year-old drives."
@@ -127,11 +127,11 @@ brise pendant une année d'utilisation normale est de 1.7\% pour un disque neuf 
 Ces valeurs, multipliées par la quantité de disques fonctionnant en même temps dans une infrastructure moderne, indique qu'un système doit
 être capable de tolérer les pannes afin d'être utilisé de façon efficace. 
 
-Le fait de répartir un système sur un ensemble de machines reliés entres-elles par un réseau implique aussi de devoir séparer un ensemble de tâches en 
+Le fait de répartir un système sur un ensemble de machines reliées entre elles par un réseau implique aussi de devoir séparer un ensemble de tâches en 
 sous-unités plus simples et de répartir ces tâches équitablement entre les nœuds du réseau afin d'obtenir une performance optimale. 
 
 Notre répartiteur est un seul programme s'exécutant sur une machine et distribuant du travail à plusieurs nœuds de calculs.
-C'est une architecture maître-esclave classique, tel qu'illustré à la figure \ref{fig:arch_1}.
+C'est une architecture maître-esclave classique, tel qu'illustrée à la figure \ref{fig:arch_1}.
 
 \section{Présentation de l'architecture}
 
@@ -144,16 +144,16 @@ C'est une architecture maître-esclave classique, tel qu'illustré à la figure 
 
 Si le fait d'avoir plusieurs nœuds de calcul permet une redondance du système, le répartiteur en soi est un \emph{"singleton"} et 
 ne comprend aucun mécanisme de redondance et représente un point unique de défaillance. Notre implémentation se doit d'être robuste et 
-a donc été développé avec un style défensif. Certaines des \emph{"10 falacies of distributed computing"} ont été prise en compte lors de l'élaboration et implémentation
+a donc été développée avec un style défensif. Certaines des \emph{"10 falacies of distributed computing"} ont été prises en compte lors de l'élaboration et implémentation
 de notre architecture. 
 
 Le serveur lui-même est écrit en utilisant un \emph{thread-pool} afin de gérer les serveurs de calcul. C'est une solution plus élégante et simple que 
 d'attribuer un \emph{thread} par nœud de calcul, en raison du grand nombre potentiel de nœuds et du fait que les serveurs ne sont pas utilisés de façon intensive 
 (on attribut un lot de travail et on attend de recevoir le résultat). 
 
-Java RMI a été utilisé afin d'implémenter l'exécution de méthodes à distances. Ceci évite d'avoir à implémenter sois-même la couche réseau et permet
+Java RMI a été utilisé afin d'implémenter l'exécution de méthodes à distance. Ceci évite d'avoir à implémenter soi-même la couche réseau et permet
 de profiter du mécanisme d'exceptions de Java ainsi que pouvoir isoler les erreurs de réseau lors du développement de l'application. L'utilisation 
-de Java permet aussi de faire appel à des fonctions du langages, comme les \emph{Futures}, simplifiant grandement la réduction effectuée par le répartiteur. Celui-ci
+de Java permet aussi de faire appel à des fonctions du langage, comme les \emph{Futures}, simplifiant grandement la réduction effectuée par le répartiteur. Celui-ci
 attend en effet simplement que les \emph{Futures} soient disponibles. La communication entre les nœuds et le répartiteur est donc asynchrone par nature.  
 
 L'implémentation non-sécuritaire repose sur un consensus où une majorité de machines doivent donner le même résultat pour une série d'opération données 
@@ -170,9 +170,9 @@ afin d'être considéré comme valide.
 Puisque nous utilisons Java RMI pour exécuter les opérations sur les serveurs de calcul, il est possible d'utiliser les mécanismes d'exceptions de Java et 
 de RMI afin de détecter si un serveur de calcul est indisponible. Le répartiteur recevra simplement une exception de type \emph{RemoteException}
 quand il tentera d'exécuter un lot de travail sur un nœud n'étant plus disponible. Aucun mécanisme de \emph{keep-alive} n'est implémenté par le répartiteur, toute la communication 
-entre le répartiteur et les nœuds étant encapsulé dans la couche de Java RMI. Le répartiteur peut ensuite donner le lot de travail à un autre nœud de calcul et périodiquement 
+entre le répartiteur et les nœuds étant encapsulés dans la couche de Java RMI. Le répartiteur peut ensuite donner le lot de travail à un autre nœud de calcul et périodiquement 
 réessayer d'attribuer du travail au nœud ne répondant pas. Si la panne persiste, le répartiteur retirera simplement le nœud de calcul de sa liste de nœuds valides. La panne peut se
-produire n'importe-quand durant l'exécution du lot de travail, puisque l'exécution d'un lot de travail est une opération atomique du point de vue du répartiteur (elle est soit exécutée au complet, 
+produire n'importe quand durant l'exécution du lot de travail, puisque l'exécution d'un lot de travail est une opération atomique du point de vue du répartiteur (elle est soit exécutée au complet, 
 refusée ou une exception est levée par Java RMI signalant qu'il est impossible de l'exécuter). 
 
 %\subsection{Formation des "chunks de travail"}
@@ -183,9 +183,9 @@ refusée ou une exception est levée par Java RMI signalant qu'il est impossible
 Chaque serveur est vu comme une entité unique ayant des propriétés distinctes par le répartiteur. Le répartiteur ignorant le facteur q de chaque
 serveur, ce dernier doit l'estimer. La stratégie pour estimer le facteur $ q $ est d'envoyer un lot de travail d'une taille donnée. Si ce dernier est accepté, on 
 conserve la taille du lot de travail. Si ce dernier est refusé, on diminue la taille du lot de travail d'une opération et on tente de la re-soumettre. L'opération 
-retirée est replacée dans la liste des opérations en attente et sera ajoutés à un prochain lot de travail. Une taille de 15 comme lot de travail initial a été 
+retirée est replacée dans la liste des opérations en attente et sera ajoutée à un prochain lot de travail. Une taille de 15 comme lot de travail initial a été 
 choisie de façon empirique à partir des valeurs de q typiques données dans l'énoncé. Le fait de choisir un q légèrement plus gros que les valeurs de l'énoncé permet
-de profiter du fait que certaines opérations où $ q > u $ pourraient quand-même être exécutées avant que, statistiquement, une d'entre-elles échoue et force le 
+de profiter du fait que certaines opérations où $ q > u $ pourraient quand même être exécutées avant que, statistiquement, une d'entre elles échoue et force le 
 répartiteur à diminuer le nombre d'opérations dans sa requête. 
 
 %\subsection{TODO Ajustement du répartiteur en fonction des serveurs }
@@ -204,13 +204,24 @@ L'exécution de \emph{operation-588} en mode sécuritaire donne les résultats p
 \end{figure}
 
 On constate une amélioration de la performance lorsque plus de serveurs sont utilisés. Ceci s'explique par le fait que les
-opérations sont fortement paralélisables. Puisque les tests ont été effectués sur une seule machine, il est impossible d'observer l'effet que le réseau aurait sur les résultats. On peut en revanche spéculer que dans l'environnemen du laboratoire, les performances seraient uniformément ralentie en raison de l'homogéniété du réseau local ainsi que de la petite taille des lots de travail et des appels de fonctions. 
+opérations sont fortement parallélisables. Puisque les tests ont été effectués sur une seule machine, il est impossible d'observer l'effet que le réseau aurait sur les résultats. On peut en revanche spéculer que dans l'environnement du laboratoire, les performances seraient uniformément ralenties en raison de l'homogéniété du réseau local ainsi que de la petite taille des lots de travail et des appels de fonctions. 
 
 \section{Test de performance - Mode non-sécurisé}
 
-L'exécution de \emph{operation-588} en mode non-sécuritaire est plus lent que les résultats obtenus en utilisant les serveurs sécuritaires. Ceci est du à la nécéssité d'établir un consensus sur la valeur corecte des résultats avant de déclarer une opération comme complétée. L'algorithme de consensus consiste simplement à déclarer une valeur bonne si deux serveurs malicieux retourne la même valeur. Tant que deux serveurs n'auront pas retournés la même valeur, le répartiteur continuera d'attribuer le lot de travail correspondant à d'autre serveurs de calculs. Puisque un serveur malveillant envois une réponse aléatoire, il es peu probable que un serveur renvois deux fois la même réponse erroné. Ce cas extrèmenent rare causerait un re-calcul de l'ensemble des opérations puisque la somme de contrôle donnée avec chaque lot de travail ne corresponderait pas. Ce cas est extrèmenent lourd en terme de calculs mais se produira extrèmenent rarement, c'est pourquoi il a été décidé d'utiliser seulement un consensus à deux valeurs plutôt que 3, afin d'amortir le coût d'un recalcul complêt sur un très grand nombre d'opérations épargnées.
+L'exécution de \emph{operation-588} en mode non-sécuritaire est plus lent que les résultats obtenus en utilisant les serveurs sécuritaires. Ceci est dû à la nécéssité d'établir un consensus sur la valeur correcte des résultats avant de déclarer une opération comme complétée. L'algorithme de consensus consiste simplement à déclarer une valeur bonne si deux serveurs malicieux retourne la même valeur. Tant que deux serveurs n'auront pas retourné la même valeur, le répartiteur continuera d'attribuer le lot de travail correspondant à d'autres serveurs de calculs. Puisqu'un serveur malveillant envoit une réponse aléatoire, il est peu probable qu'un serveur renvoit deux fois la même réponse erronée. Ce cas extrêmenent rare causerait un re-calcul de l'ensemble des opérations puisque la somme de contrôle donnée avec chaque lot de travail ne corresponderait pas. Ce cas est extrêmenent lourd en terme de calculs mais se produira extrêmenent rarement, c'est pourquoi il a été décidé d'utiliser seulement un consensus à deux valeurs plutôt que 3, afin d'amortir le coût d'un recalcul complet sur un très grand nombre d'opérations épargnées.
 
-En faisant varier le pourcentage de réponses volotairement erronées des serveurs malveillants, on peut observer une dégradation de la performance causée par un plus grand nombre d'essais en moyenne avant d'obtenir deux résultats identiques. 
+En faisant varier le pourcentage de réponses volontairement erronées des serveurs malveillants, on peut observer une dégradation de la performance causée par un plus grand nombre d'essais en moyenne avant d'obtenir deux résultats identiques.
+
+La performance de l'implémentation non-sécurisée diminue avec l'augmentation des serveurs malicieux, tel qu'illustré à la figure \ref{fig:safe}
+
+\begin{figure}
+  \includegraphics[width=\linewidth]{unsafe_exec.eps}
+  \caption{ Exécution des différents tests de performance en mode non-sécuritaire }
+  \label{fig:unsafe}
+\end{figure}
+
+Ces résultats ne sont pas surprenants puisque plus il y a de serveurs malicieux, plus il sera long avant
+d'obtenir un consensus de deux valeurs identiques pour un groupe d'opérations. 
 
 %3 serveurs de bonne foie, q = 5 : 755 ms
 
@@ -227,10 +238,10 @@ système?
 
 Notre approche serait de faire fonctionner plusieurs répartiteurs en parallèle, afin de permettre à 
 un répartiteur de tomber en panne sans arrêter le système au complet. Dans un scénario idéal, les répartiteurs 
-communiqueraient entre-eux afin de se distribuer un sous-ensemble des tâches à effectuer et confirmer aux autres répartiteurs 
-les tâches ayant été données au nœuds de calculs et ayant été complétés, pour éviter qu'une même tâche ne soit exécuté deux fois
-et comptabilisé deux fois. Ce n'est pas exceptionnellement grave si une tâche est exécuté deux fois, en autant que cette dernière ne sois 
-pas comptabilisé deux fois lors de la réduction. Cette architecture est illustrée à la figure  \ref{fig:arch_2}.
+communiqueraient entre eux afin de se distribuer un sous-ensemble des tâches à effectuer et confirmer aux autres répartiteurs 
+les tâches ayant été données aux nœuds de calculs et ayant été complétés, pour éviter qu'une même tâche ne soit exécutée deux fois
+et comptabilisée deux fois. Ce n'est pas exceptionnellement grave si une tâche est exécutée deux fois, en autant que cette dernière ne soit 
+pas comptabilisée deux fois lors de la réduction. Cette architecture est illustrée à la figure  \ref{fig:arch_2}.
 
 \begin{figure}
   \includegraphics[width=\linewidth]{Arch_2.eps}
@@ -256,12 +267,12 @@ de réseau peut maintenant partitonner notre infrastructure en deux, tel que les
   \label{fig:arch_part}
 \end{figure}
 
-On aurais le problème du P du théorème CAP, c'est à dire que le système peut devenir partitionnée et que les répartiteurs 
-peuvent essayer d'assigner les mêmes tâches à deux serveurs sans se coordoner. Notre système doit donc faire le choix entre rester
+On aurait le problème du P du théorème CAP, c'est-à-dire que le système peut devenir partitionné et que les répartiteurs 
+peuvent essayer d'assigner les mêmes tâches à deux serveurs sans se coordonner. Notre système doit donc faire le choix entre rester
 disponible ou être consistant. 
 
 Une solution serait de donner une copie de l'ensemble des tâches à réaliser à chaque répartiteur et d'utiliser des messages de synchronisation pour s'assurer que les 
-tâches ne soient exécutées qu'une seule fois et comptabilisé une seule fois. Dans le cas d'un partitionnement, un seul des deux serveurs devrait continuer d'opérer normalement, 
+tâches ne soient exécutées qu'une seule fois et comptabilisées une seule fois. Dans le cas d'un partitionnement, un seul des deux serveurs devrait continuer d'opérer normalement, 
 un serveur dit "chef", l'autre se mettant en attente du premier serveur afin de se faire renvoyer la liste des tâches effectuées depuis le partitionnement par le serveur 
 afin de pouvoir continuer l'exécution à deux serveurs en parallèle, tel qu'illustré à la figure \ref{fig:arch_2_chef}.
 
@@ -276,34 +287,34 @@ et du singleton) mais le système sera plus lent et moins disponible.
 
 Un problème de cette approche est toutefois d'identifier le partitionnement lorsque ce dernier se produit et de déterminer quel répartiteur doit agir comme "chef". Le cas trivial d'un 
 serveur totalement déconnecté du réseau est évident à traiter, puisque ce dernier ne peut plus voir aucun autre nœud ou répartiteur, mais le cas où la partition isole les répartiteurs 
-l'un de l'autre mais où des nœuds de calculs sont toujours accessibles, déterminer un chef est un problème de taille en sois. Une solution serait de choisir une machine tierce comme point de 
-référence pour notre système, comme une \emph{switch} réseau centrale où un serveur particulièrement robuste. En cas de partitionnement, tout serveur étant capable de rejoindre cette pièce d'équipement 
+l'un de l'autre mais où des nœuds de calculs sont toujours accessibles, déterminer un chef est un problème de taille en soi. Une solution serait de choisir une machine tierce comme point de 
+référence pour notre système, comme une \emph{switch} réseau central ou un serveur particulièrement robuste. En cas de partitionnement, tout serveur étant capable de rejoindre cette pièce d'équipement 
 sera le répartiteur "chef". Cette solution permet même à cette pièce d'équipement, de signaler qu'elle a déjà donné le contrôle à un autre répartiteur, si deux répartiteurs sont capable de la contacter. 
 Cette solution est toutefois vulnérable à d'autres scénarios de partitionnement. 
 
-Une autre approche est de faire travailler les répartiteurs comme si de rien était mais sans effectuer la réduction finale sur les résultats des calculs. Quand un autre répartiteur reviendra accessible, 
-ces derniers communiqueront quelles opérations ils ont effectués et s'assureront d'effectuer la réduction uniquement une fois sur chaque opération. 
+Une autre approche est de faire travailler les répartiteurs comme si de rien n'était mais sans effectuer la réduction finale sur les résultats des calculs. Quand un autre répartiteur reviendra accessible, 
+ces derniers communiqueront quelles opérations ils ont effectuées et s'assureront d'effectuer la réduction uniquement une fois sur chaque opération. 
 
 Une dernière approche serait de donner des états aux serveurs de calcul, mais cette approche comporte aussi son lot de problèmes additionnels. 
 Nous préférons grandement une implémentation où les serveurs de calculs agissent sans conserver d'états, comme dans une architecture REST traditionnelle. 
 
 \section{Conclusion et implémentations alternatives.}
 
-En terme d'optimisations, notre répartiteur repose sur plusieurs heuristiques (choix du nombre de requêtes initial) n'ayant pas été étudiés. 
+En terme d'optimisation, notre répartiteur repose sur plusieurs heuristiques (choix du nombre de requêtes initiales) n'ayant pas été étudiées. 
 Un profilage détaillé de l'application ainsi que la variation de ces paramètres pourrait permettre de les fixer à des valeurs optimales en fonction
 du type de charge de travail à effectuer. De plus, notre implémentation se base sur un réseau relativement fiable et constant en terme de latence et de débit. 
-Aucune optimisation n'est effectués pour se protéger d'un réseau fiable mais au performances aléatoires. À titre d'exemple, le choix des serveurs ne se fait pas 
+Aucune optimisation n'est effectuée pour se protéger d'un réseau fiable mais aux performances aléatoires. À titre d'exemple, le choix des serveurs ne se fait pas 
 en prenant en compte la performance du réseau. Un serveur inoccupé mais connecté à un réseau très lent sera favorisé par rapport à un serveur très occupé mais connecté
 à un réseau très rapide et offrant, au final, de meilleures performances. Une façon de remédier à ce problème serait de faire mesurer le temps de réponse d'un serveur
 pour une requête donnée par le répartiteur et la comparer à une valeur heuristique correspondant à l'exécution locale de ce lot de travail afin de déterminer la
-pénalité imposé par le réseau pour utiliser ce nœud en particulier. 
+pénalité imposée par le réseau pour utiliser ce nœud en particulier. 
 
 Il serait aussi possible d'obtenir le facteur d'utilisation des serveurs directement en les interrogeant plutôt qu'en envoyant des lots de travail de taille 
 aléatoire. Théoriquement, rien n'empêche le serveur de renvoyer des informations sur sa charge de travail actuelle.
 
-Il aurait été possible de tenter d'estimer l'honnêteté d'un serveur non-sécuritaire afin d'envoyer plus de requêtes aux serveurs donnant les bons résultat la majorité du temps. 
+Il aurait été possible de tenter d'estimer l'honnêteté d'un serveur non-sécuritaire afin d'envoyer plus de requêtes aux serveurs donnant les bons résultats la majorité du temps. 
 
-Finalement, il serait aussi possible de mieux équilibrer la charge de travail entre différents lots de même taille.Puisque le temps de calcul du plus grand nombre premier crois linéairement avec la valeur du nombre à traiter, un lot de travail comportant uniquement des nombres de très grande valeur sera plus long à exécuter qu'un lot de même taille comportant des valeurs très petites. Pour équilibrer les lots, il faudrait mesurer la performance des opérations afin d'assigner une valeur estimée de difficulté pour une opération donnée et tenter de former les lots de travail de façon à ce que la somme des difficultés soit relativement uniforme d'un lot à l'autre. 
+Finalement, il serait aussi possible de mieux équilibrer la charge de travail entre différents lots de même taille. Puisque le temps de calcul du plus grand nombre premier croît linéairement avec la valeur du nombre à traiter, un lot de travail comportant uniquement des nombres de très grande valeur sera plus long à exécuter qu'un lot de même taille comportant des valeurs très petites. Pour équilibrer les lots, il faudrait mesurer la performance des opérations afin d'assigner une valeur estimée de difficulté pour une opération donnée et tenter de former les lots de travail de façon à ce que la somme des difficultés soit relativement uniforme d'un lot à l'autre. 
 
 
 \end{document}
