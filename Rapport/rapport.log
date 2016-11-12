@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.17 (TeX Live 2016/W32TeX) (preloaded format=pdflatex 2016.9.9)  12 NOV 2016 14:05
+This is pdfTeX, Version 3.14159265-2.6-1.40.17 (TeX Live 2016/W32TeX) (preloaded format=pdflatex 2016.9.9)  12 NOV 2016 15:46
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -762,13 +762,7 @@ File: Arch_2_part_mediator-eps-converted-to.pdf Graphic file (type pdf)
 Package pdftex.def Info: Arch_2_part_mediator-eps-converted-to.pdf used on inpu
 t line 280.
 (pdftex.def)             Requested size: 432.76628pt x 375.89497pt.
- [11 <./Arch_2_part_mediator-eps-converted-to.pdf>]
-Overfull \hbox (2.00977pt too wide) in paragraph at lines 303--311
-[]\OT1/cmr/m/n/12 En terme d'op-ti-mi-sa-tions, notre r^^Separtiteur re-pose su
-r plu-sieurs heu-ris-tiques (choix
- []
-
-[12]
+ [11 <./Arch_2_part_mediator-eps-converted-to.pdf>] [12]
 Overfull \hbox (22.41093pt too wide) in paragraph at lines 312--314
 \OT1/cmr/m/n/12 les in-ter-ro-geant plut^ot qu'en en-voyant des lots de tra-vai
 l de taille al^^Seatoire. Th^^Seoriquement,
@@ -778,11 +772,11 @@ l de taille al^^Seatoire. Th^^Seoriquement,
 Here is how much of TeX's memory you used:
  4339 strings out of 493013
  61738 string characters out of 6137009
- 139817 words of memory out of 5000000
+ 138817 words of memory out of 5000000
  7787 multiletter control sequences out of 15000+600000
  9009 words of font info for 32 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 40i,5n,37p,1215b,439s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 40i,5n,37p,1216b,439s stack positions out of 5000i,500n,10000p,200000b,80000s
 <c:/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/c
 m/cmbx12.pfb><c:/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmcsc10
 .pfb><c:/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb><c:/
@@ -792,7 +786,7 @@ ist/fonts/type1/public/amsfonts/cm/cmr17.pfb><c:/texlive/2016/texmf-dist/fonts/
 type1/public/amsfonts/cm/cmr8.pfb><c:/texlive/2016/texmf-dist/fonts/type1/publi
 c/amsfonts/cm/cmti12.pfb><c:/texlive/2016/texmf-dist/fonts/type1/public/amsfont
 s/cm/cmtt10.pfb>
-Output written on rapport.pdf (13 pages, 381960 bytes).
+Output written on rapport.pdf (13 pages, 381992 bytes).
 PDF statistics:
  110 PDF objects out of 1000 (max. 8388607)
  75 compressed objects within 1 object stream
